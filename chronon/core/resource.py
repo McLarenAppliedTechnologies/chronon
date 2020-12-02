@@ -1,6 +1,6 @@
 import simpy
 from pandas import DataFrame, Series
-from datetime import datetime
+from itertools import chain
 
 
 class Request(simpy.resources.base.Put):
@@ -19,12 +19,14 @@ class Request(simpy.resources.base.Put):
         Keyword Args:
             user (:class:`.User`): user putting the request
             synched_resources (list): list of :class:`.Resource` to be used in synchrony
+            which (string): `all` or `any` resources in the list
         """
         super(simpy.resources.base.Put, self).__init__(resource._env)
-        self.user = kwargs.get('user', None)
         self.resource = resource
         self.proc = self.env.active_process
-        self.synched_resources = kwargs.get('synched_resources', None)
+
+        # Parse all kwargs (including user and synched_resources)
+        self.__dict__.update(kwargs)
 
         # PUT queueing
         resource.put_queue.append(self)
@@ -96,12 +98,15 @@ class Resource(simpy.Resource):
         Args:
             rm (:class:`.ResourceManager`): parent resource manager
             name (str): resource name
-            **kwargs: Arbitrary keyword arguments
+
+        Keyword Args:
+            capacity (int): resource capacity
         """
         self.rm = rm
         self.name = name
+        self.__dict__.update(kwargs)
         self.usage = DataFrame(columns=['instant', 'user', 'status', 'users', 'queue'])
-        super().__init__(rm.env, **kwargs)
+        super().__init__(rm.env, kwargs.get('capacity', 1))
 
     def _trigger_put(self, get_event):
         idx = 0
@@ -114,23 +119,43 @@ class Resource(simpy.Resource):
                 raise RuntimeError('Put queue invariant violated')
 
     def _do_put(self, event):
+        # Nomenclature warning: SimPy users are requests
         if event.synched_resources:
-            # Verifies if resources have enough capacity, excluding processes of this
-            # user
-            users = [r.users for r in event.synched_resources]
+            # Verify if resources have enough capacity, excluding processes of this user
+            simpy_users = [
+                r.users for r in event.synched_resources
+            ]
             this_user_processes = [
-                len([s for s in u if s.user == event.user]) 
-                for u in users
+                len([s for s in u if s.user == event.user])
+                for u in simpy_users
             ]
             resources_available = [
-                len(r.users) < (r.capacity + s) 
+                len(r.users) < (r.capacity + s)
                 for r, s in zip(event.synched_resources, this_user_processes)
             ]
-            if all(resources_available):
+
+            # Get chronon users of all requests using any of the synched resources
+            chronon_users = [
+                u.user for u in list(chain.from_iterable(simpy_users))
+            ]
+
+            if event.which == 'all' and all(resources_available):
                 self.users.append(event)
                 event.usage_since = self._env.now
                 event.succeed()
                 self.update_usage(event.user, 'Using')
+            elif (event.which == 'any'
+                    and event.user not in chronon_users
+                    and event.resource.count < event.resource.capacity):
+                self.users.append(event)
+                event.usage_since = self._env.now
+                event.succeed()
+                self.update_usage(event.user, 'Using')
+                # Remove this user from queues in other resources
+                user_queues = self.rm.get_resources(by_user_queueing=event.user.name)
+                event.user.releases([r.name for r in user_queues if r is not self])
+                [r.update_usage(event.user, 'Unqueued') for r in user_queues if r is not self]
+
         else:
             if len(self.users) < self.capacity:
                 self.users.append(event)

@@ -19,3 +19,15 @@ class Process:
             user (:class:`.User`)
         """
         pass
+
+    def get_resource(self, name):
+        """
+        Shortcut to Resource Manager get_resource
+        """
+        return self.rm.get_resource(name)
+
+    def get_resources(self, **kwargs):
+        """
+        Shortcut to Resource Manager get_resources
+        """
+        return self.rm.get_resources(**kwargs)

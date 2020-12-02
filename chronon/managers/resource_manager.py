@@ -40,3 +40,88 @@ class ResourceManager(Manager):
             :class:`simpy.Resource`
         """
         return self._store[name]
+
+    def get_resources(self, **kwargs):
+        """
+        Get resources by condition.
+
+        Args:
+            names (list): name or list of names of resources
+
+        Keyword Args:
+            by_user (list): name or list of names of users who
+                must be using any resources. Can be set to `any`.
+            by_users_queueing (list): name or list of names of
+                users who must be queueing in any of the resources.
+                Can be set to `any`.
+            by_properties (dict): dictionary of properties with
+                desired values.
+
+        Returns:
+            :class:`simpy.Resource`
+        """
+        by_user = kwargs.get('by_user', None)
+        by_user_queueing = kwargs.get('by_user_queueing', None)
+        by_properties = kwargs.get('by_properties', None)
+
+        resources = []
+
+        # All resources
+        if by_user is None and by_user_queueing is None:
+            resources = [self._store[k] for k in self._store.keys()]
+
+        # Resources with users
+        if by_user == 'any':
+            resources += self.get_resources_with_users()
+
+        # Resources specific users
+        elif by_user is not None:
+            if isinstance(by_user, str):
+                by_user = [by_user]
+            for user in by_user:
+                resources += self.get_resources_with_users(by_user=user)
+
+        # Resources with queues
+        if by_user_queueing == 'any':
+            resources += self.get_resources_with_queues()
+
+        # Resources with specific users on queues
+        elif by_user_queueing is not None:
+            if isinstance(by_user_queueing, str):
+                by_user_queueing = [by_user_queueing]
+            for user in by_user_queueing:
+                resources += self.get_resources_with_queues(by_user=user)
+
+        resources = list(set(resources))
+
+        # Resources filtered by property
+        if by_properties is not None:
+            resources = [
+                r for r in resources if by_properties.items() <= r.__dict__.items()
+            ]
+
+        return resources
+
+    def get_resources_with_users(self, by_user=None):
+        if by_user is None:
+            return [
+                self.get_resource(r) for r in self.resources
+                if len(self.get_resource(r).users) > 0
+            ]
+        else:
+            return [
+                self.get_resource(r) for r in self.resources if by_user in
+                [request.user.name for request in self.get_resource(r).users]
+            ]
+
+    def get_resources_with_queues(self, by_user=None):
+        if by_user is None:
+            return [
+                self.get_resource(r) for r in self.resources
+                if len(self.get_resource(r).queue) > 0
+            ]
+        else:
+            return [
+                self.get_resource(r) for r in self.resources if by_user in
+                [request.user.name for request in self.get_resource(r).queue]
+            ]

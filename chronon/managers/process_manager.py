@@ -35,7 +35,7 @@ class ProcessManager(Manager):
             **kwargs: Arbitrary keyword arguments
         """
         self.rm.create_resource(names, **kwargs)
-    
+
     def get_resource(self, name):
         """
         Shortcut for `get_resource` method in :class:`.ResourceManager`.

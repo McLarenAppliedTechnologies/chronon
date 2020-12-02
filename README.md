@@ -103,6 +103,8 @@ pm.set_flow(from_process='AnotherBranch', to_process='LastProcess')
 |:---------------------------|
 | When ``set_flow`` is called using the ``sequence`` argument, the flow is reset, ignoring any specific links previously defined.      |
 
+Note that it is possible to define several parallel flows that will never intersect within the same process manager. In this scenario, it's mandatory to declare the initial process for each user explicitly.
+
 ### Instantiating an Event Manager
 
 Once all the processes are defined, an `EventManager` must be created for managing the simulation execution:

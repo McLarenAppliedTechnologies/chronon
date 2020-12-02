@@ -32,7 +32,7 @@ class UserManager(Manager):
         if isinstance(name, str):
             name = [name]
         for n in name:
-            self._store[n] = User(self.pm, n, **kwargs)
+            self._store[n] = User(self, self.pm, n, **kwargs)
 
     def get_user(self, name):
         """Get user by name.
