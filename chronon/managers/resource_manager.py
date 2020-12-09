@@ -23,11 +23,17 @@ class ResourceManager(Manager):
         Args:
             names (str): List of names of resources to be created
             **kwargs: Arbitrary keyword arguments
+
+        Keyword Args:
+            custom_resource (:class:): Custom resource class
         """
+        ResourceClass = kwargs.get('custom_resource', Resource)
+
         if isinstance(names, str):
             names = [names]
+
         for n in names:
-            self._store[n] = Resource(self, n, **kwargs)
+            self._store[n] = ResourceClass(self, n, **kwargs)
 
     def get_resource(self, name):
         """
@@ -45,17 +51,14 @@ class ResourceManager(Manager):
         """
         Get resources by condition.
 
-        Args:
-            names (list): name or list of names of resources
-
         Keyword Args:
-            by_user (list): name or list of names of users who
+            by_user (list): user or list of users who
                 must be using any resources. Can be set to `any`.
-            by_users_queueing (list): name or list of names of
-                users who must be queueing in any of the resources.
+            by_users_queueing (list): user or list of users
+                who must be queueing in any of the resources.
                 Can be set to `any`.
-            by_properties (dict): dictionary of properties with
-                desired values.
+            by_properties (dict): dictionary with desired
+                resources properties values.
 
         Returns:
             :class:`simpy.Resource`
@@ -76,7 +79,7 @@ class ResourceManager(Manager):
 
         # Resources specific users
         elif by_user is not None:
-            if isinstance(by_user, str):
+            if not isinstance(by_user, list):
                 by_user = [by_user]
             for user in by_user:
                 resources += self.get_resources_with_users(by_user=user)
@@ -87,7 +90,7 @@ class ResourceManager(Manager):
 
         # Resources with specific users on queues
         elif by_user_queueing is not None:
-            if isinstance(by_user_queueing, str):
+            if not isinstance(by_user_queueing, list):
                 by_user_queueing = [by_user_queueing]
             for user in by_user_queueing:
                 resources += self.get_resources_with_queues(by_user=user)
@@ -109,9 +112,11 @@ class ResourceManager(Manager):
                 if len(self.get_resource(r).users) > 0
             ]
         else:
+            # Supports both user and user.name
             return [
-                self.get_resource(r) for r in self.resources if by_user in
-                [request.user.name for request in self.get_resource(r).users]
+                self.get_resource(r) for r in self.resources
+                if by_user in [request.user.name for request in self.get_resource(r).users]
+                or by_user in [request.user for request in self.get_resource(r).users]
             ]
 
     def get_resources_with_queues(self, by_user=None):
@@ -121,7 +126,9 @@ class ResourceManager(Manager):
                 if len(self.get_resource(r).queue) > 0
             ]
         else:
+            # Supports both user and user.name
             return [
-                self.get_resource(r) for r in self.resources if by_user in
-                [request.user.name for request in self.get_resource(r).queue]
+                self.get_resource(r) for r in self.resources
+                if by_user in [request.user.name for request in self.get_resource(r).queue]
+                or by_user in [request.user for request in self.get_resource(r).queue]
             ]

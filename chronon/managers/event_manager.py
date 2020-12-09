@@ -40,17 +40,8 @@ class EventManager(Manager):
     def create_user(self, name, **kwargs):
         """
         Shortcut for `create_user` method in :class:`.UserManager`.
-
-        Args:
-            name (str)
-            **kwargs: Arbitrary keyword arguments
-
-        Keyword Args:
-            instant (float): Instant when user enters the simulation. If not set, starts at 0.
-            initial_process (str): Process in which the user enters the simulation.
-                If not set, starts at flow's initial_process.
         """
-        self.um.create_user(name, **kwargs)
+        return self.um.create_user(name, **kwargs)
 
     def set_user(self, name, **kwargs):
         """

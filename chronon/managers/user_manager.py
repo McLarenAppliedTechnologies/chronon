@@ -28,11 +28,22 @@ class UserManager(Manager):
             instant (float): Instant when user enters the simulation. If not set, starts at 0.
             initial_process (str): Process in which the user enters the simulation.
                 If not set, starts at flow's initial_process.
+            custom_user (:class:): Custom user class
         """
-        if isinstance(name, str):
+        UserClass = kwargs.get('custom_user', User)
+
+        if not isinstance(name, list):
             name = [name]
+
+        users = []
         for n in name:
-            self._store[n] = User(self, self.pm, n, **kwargs)
+            self._store[n] = UserClass(self, self.pm, n, **kwargs)
+            users.append(self._store[n])
+
+        if len(users) == 1:
+            users = users[0]
+
+        return users
 
     def get_user(self, name):
         """Get user by name.

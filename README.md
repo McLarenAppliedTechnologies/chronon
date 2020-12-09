@@ -223,6 +223,7 @@ To run linting
 ```sh
 poetry run flake8 chronon --statistics
 ```
+To fix linting issue automatically, when possible: `poetry run autopep8 --in-place -r chronon`
 
 To generate the docs
 

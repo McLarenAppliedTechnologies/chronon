@@ -20,12 +20,13 @@ class Request(simpy.resources.base.Put):
             user (:class:`.User`): user putting the request
             synched_resources (list): list of :class:`.Resource` to be used in synchrony
             which (string): `all` or `any` resources in the list
+            having (dict): properties that should match a specific value in the resources
         """
         super(simpy.resources.base.Put, self).__init__(resource._env)
         self.resource = resource
         self.proc = self.env.active_process
 
-        # Parse all kwargs (including user and synched_resources)
+        # Parse all kwargs
         self.__dict__.update(kwargs)
 
         # PUT queueing
@@ -121,6 +122,13 @@ class Resource(simpy.Resource):
     def _do_put(self, event):
         # Nomenclature warning: SimPy users are requests
         if event.synched_resources:
+            # Assessing having conditional. True if resource matches required properties.
+            having_condition = True
+            if event.having is not None:
+                for key, value in event.having.items():
+                    having_condition = having_condition * \
+                        (getattr(event.resource, key) == value)
+
             # Verify if resources have enough capacity, excluding processes of this user
             simpy_users = [
                 r.users for r in event.synched_resources
@@ -139,14 +147,17 @@ class Resource(simpy.Resource):
                 u.user for u in list(chain.from_iterable(simpy_users))
             ]
 
-            if event.which == 'all' and all(resources_available):
+            if (event.which == 'all'
+                    and all(resources_available)
+                    and having_condition):
                 self.users.append(event)
                 event.usage_since = self._env.now
                 event.succeed()
                 self.update_usage(event.user, 'Using')
             elif (event.which == 'any'
                     and event.user not in chronon_users
-                    and event.resource.count < event.resource.capacity):
+                    and event.resource.count < event.resource.capacity
+                    and having_condition):
                 self.users.append(event)
                 event.usage_since = self._env.now
                 event.succeed()

@@ -45,6 +45,12 @@ class ProcessManager(Manager):
         """
         return self.rm.get_resource(name)
 
+    def get_resources(self, **kwargs):
+        """
+        Shortcut for `get_resources` method in :class:`.ResourceManager`.
+        """
+        return self.rm.get_resources(**kwargs)
+
     def attach_process(self, process_class, **kwargs):
         """
         Attach process to the simulation.

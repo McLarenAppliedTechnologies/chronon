@@ -89,11 +89,13 @@ class User:
 
         Keyword Args:
             which (string): `all` or `any` resources in the list
+            having (dict): properties that should match a specific value in the resources
 
         Returns:
             :class:`simpy.Request`: list of requests
         """
         which = kwargs.get('which', 'all')
+        having = kwargs.get('having', None)
 
         if not isinstance(resources, list):
             resources = [resources]
@@ -110,11 +112,13 @@ class User:
 
         requests = []
         for r in resources:
+            # If `any` stop making requests as soon as it gets access to a resource
             if which != 'any' or len(self.rm.get_resources(by_user=self.name)) == 0:
                 request = r.request(
                     user=self,
                     synched_resources=synched_resources,
-                    which=which
+                    which=which,
+                    having=having
                 )
                 requests.append(request)
         return requests
@@ -166,9 +170,11 @@ class User:
             patience (float/:class:`datetime.timedelta`): maximum time user waits
                 for obtaining the resources
             which (string): `all` or `any` resources in the list
+            having (dict): properties that should match a specific value in the resources
         """
         patience = kwargs.get('patience', 'unlimited')
         which = kwargs.get('which', 'all')
+        having = kwargs.get('having', None)
 
         # Patience
         if isinstance(patience, (int, float, datetime, timedelta)):
@@ -188,7 +194,7 @@ class User:
 
         # Resources
         else:
-            requests = self.requests(something, which=which)
+            requests = self.requests(something, which=which, having=having)
             if which == 'all':
                 waits_time_or_resources = self.env.all_of(requests)
             elif which == 'any':
