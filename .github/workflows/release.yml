@@ -1,0 +1,29 @@
+name: release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python 3.8
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
+      - uses: abatilo/actions-poetry@v2.0.0
+      - name: Install dependencies
+        run: poetry install
+      - name: Lint with flake8
+        run: poetry run flake8 chronon --statistics
+      - name: Test with pytest
+        run: poetry run pytest tests
+      - name: Build package
+        run: |
+          pip install poetry-dynamic-versioning
+          poetry build
+      - name: Publish package
+        run: poetry publish -u ${{ secrets.pypi_username }} -p ${{ secrets.pypi_password }}
