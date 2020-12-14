@@ -7,8 +7,6 @@ on:
       - 'master'
       - 'develop'
       - 'feature/*'
-    tags:
-      - 'v*'
   pull_request:
     branches:
       - 'main'
@@ -37,6 +35,3 @@ jobs:
         run: |
           pip install poetry-dynamic-versioning
           poetry build
-      - name: Publish package
-        if: startsWith(github.ref, 'refs/tags/v')
-        run: poetry publish -u ${{ secrets.pypi_username }} -p ${{ secrets.pypi_password }}
