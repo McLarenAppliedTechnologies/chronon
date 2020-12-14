@@ -116,22 +116,7 @@ This data frame tracks the key instants of the relation between users and resour
   - ``Requested``: when a user requested the resource
   - ``Using``: when a user started using a resource
   - ``Released``: when a user released a resource
-
-  >>> print(pm.get_resource('R1').usage)
-        instant        user     status
-  0    0.169643  customer_3  Requested
-  1    0.169643  customer_3      Using
-  2    0.473589  customer_3   Released
-  3    0.483617  customer_4  Requested
-  4    0.483617  customer_4      Using
-  5    1.867672  customer_0  Requested
-  6    3.514652  customer_4   Released
-  7    3.514652  customer_0      Using
-  8    6.186171  customer_2  Requested
-  9   14.947449  customer_1  Requested
-  10  17.064728  customer_0   Released
-  11  17.064728  customer_1      Using
-  12  22.871759  customer_1   Released
+  - ``Unqueued``: moment in which the user reneged
 
 In addition to the resources reporting, custom key time instants can be registered as 
 checkpoints along the simulation by calling the ``user.set_checkpoint`` method::
@@ -140,22 +125,9 @@ checkpoints along the simulation by calling the ``user.set_checkpoint`` method::
   user.waits(user.some_resource)
   user.set_checkpoint('Using resource')
 
-Users' checkpoints are available in ``user.checkpoints``::
+Users' checkpoints are available in ``user.checkpoints``.
 
-  >>> print(user.checkpoints)
-     instant   info
-  0       15   Requested resource
-  1       18   Using resource
-
-The logs of all checkpoints in the simulation are available in the Event Manager::
-
-  >>> print(em.checkpoints)
-     instant   user      info
-  0        4   UserOne   Requested resource
-  1        4   UserOne   Using resource
-  2       15   UserTwo   Requested resource
-  3       18   UserOne   Released resource
-  4       18   UserTwo   Using resource
+The logs of all checkpoints in the simulation are available in the Event Manager (``em.checkpoints``).
 
 Contents
 --------

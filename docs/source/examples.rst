@@ -2,6 +2,10 @@
 Examples
 ========
 
+Bike Sharing
+------------
+.. literalinclude:: ../../examples/bike_sharing.py
+
 Carwash
 -------
 As seen in `here <https://simpy.readthedocs.io/en/latest/examples/carwash.html>`_.
