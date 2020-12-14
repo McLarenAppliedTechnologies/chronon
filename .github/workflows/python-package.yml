@@ -33,6 +33,5 @@ jobs:
         run: poetry run pytest tests
       - name: Build package
         run: |
-          pip install dunamai
-          poetry version $(dunamai from git)
+          pip install poetry-dynamic-versioning
           poetry build
