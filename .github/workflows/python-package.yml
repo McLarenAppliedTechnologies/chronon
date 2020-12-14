@@ -30,7 +30,7 @@ jobs:
       - name: Lint with flake8
         run: poetry run flake8 chronon --statistics
       - name: Test with pytest
-        run: poetry run pytest --cov=chronon --cov-branch --cov-fail-under=90 tests/
+        run: poetry run pytest tests
       - name: Build package
         run: |
           pip install dunamai
