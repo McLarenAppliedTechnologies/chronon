@@ -28,7 +28,7 @@ jobs:
       - name: Install dependencies
         run: poetry install
       - name: Lint with flake8
-        run: poetry run flake8 chronon/ --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+        run: poetry run flake8 chronon --statistics
       - name: Test with pytest
         run: poetry run pytest --cov=chronon --cov-branch --cov-fail-under=90 tests/
       - name: Build package
