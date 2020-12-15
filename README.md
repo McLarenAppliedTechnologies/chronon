@@ -1,5 +1,8 @@
 # Chronon
 
+[![Actions Status](https://github.com/McLarenAppliedTechnologies/chronon/workflows/python-package-CI/badge.svg)](https://github.com/McLarenAppliedTechnologies/chronon/actions)
+[![Documentation Status](https://readthedocs.org/projects/chronon/badge/?version=latest)](https://chronon.readthedocs.io/en/latest/?badge=latest)
+
 A discrete event framework based on [SimPy](https://simpy.readthedocs.io).
 
 ## Installing
