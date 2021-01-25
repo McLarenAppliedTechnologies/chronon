@@ -1,5 +1,6 @@
 import simpy
 from pandas import DataFrame, Series
+import numpy as np
 from datetime import datetime, timedelta
 from ..helpers.time import parse_time
 
@@ -176,8 +177,10 @@ class User:
         which = kwargs.get('which', 'all')
         having = kwargs.get('having', None)
 
+        numbers = (int, float, np.int64, np.float64, datetime, timedelta)
+
         # Patience
-        if isinstance(patience, (int, float, datetime, timedelta)):
+        if isinstance(patience, numbers):
             waits_patience = self.env.timeout(parse_time(patience))
         elif patience == 'unlimited':
             # Creating an event that never will be triggered, aiming to make
@@ -187,7 +190,7 @@ class User:
             raise ValueError('Patience must be a number or datetime object')
 
         # Timeout
-        if isinstance(something, (int, float, datetime, timedelta)):
+        if isinstance(something, numbers):
             waits_time_or_resources = self.env.all_of(
                 [self.env.timeout(parse_time(something))]
             )
