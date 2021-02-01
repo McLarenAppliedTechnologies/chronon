@@ -3,6 +3,7 @@ from pandas import DataFrame, Series
 import numpy as np
 from datetime import datetime, timedelta
 from ..helpers.time import parse_time
+from .resource import Resource
 
 
 class User:
@@ -194,14 +195,15 @@ class User:
             waits_time_or_resources = self.env.all_of(
                 [self.env.timeout(parse_time(something))]
             )
-
         # Resources
-        else:
+        elif isinstance(something, (list, str, Resource)):
             requests = self.requests(something, which=which, having=having)
             if which == 'all':
                 waits_time_or_resources = self.env.all_of(requests)
             elif which == 'any':
                 waits_time_or_resources = self.env.any_of(requests)
+        else:
+            raise ValueError('Users can only wait for time or resources')
 
         return waits_time_or_resources | waits_patience
 

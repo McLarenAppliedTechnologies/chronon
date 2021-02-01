@@ -26,6 +26,7 @@ class ResourceManager(Manager):
 
         Keyword Args:
             custom_resource (:class:): Custom resource class
+            report (bool): Create report on resource usage or not
         """
         ResourceClass = kwargs.get('custom_resource', Resource)
 
