@@ -96,3 +96,25 @@ class EventManager(Manager):
                 self.checkpoints = self.checkpoints.append(user_row, ignore_index=True)
                 self.checkpoints = self.checkpoints.sort_values(
                     by='instant').reset_index(drop=True)
+    
+    def get_state(self, at):
+        """
+        Return the occupation and queues of each resource `at` a given instant
+
+        Args:
+            at (float): target instant
+        """
+        state = []
+        empty = {'users': [], 'queue': []}
+        for r in self.pm.rm.resources:
+            resource_state = (
+                self.pm.get_resource(r).usage
+                .query(f'instant<={at}').tail(1)
+                [['users', 'queue']].to_dict('records')
+            )
+            if resource_state:
+                state.append({'resource': r, **resource_state[0]})
+            else:
+                state.append({'resource': r, **empty})
+        state_df = DataFrame(state)
+        return state_df
