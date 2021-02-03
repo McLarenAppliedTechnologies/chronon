@@ -96,7 +96,7 @@ class EventManager(Manager):
                 self.checkpoints = self.checkpoints.append(user_row, ignore_index=True)
                 self.checkpoints = self.checkpoints.sort_values(
                     by='instant').reset_index(drop=True)
-    
+
     def get_state(self, at):
         """
         Return the occupation and queues of each resource `at` a given instant
