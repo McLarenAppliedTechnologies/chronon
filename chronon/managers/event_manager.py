@@ -24,7 +24,6 @@ class EventManager(Manager):
         super().__init__()
         self.um = kwargs.get('um', UserManager(pm))
         self.events = self._store.keys()
-        self.checkpoints = DataFrame(columns=['instant', 'user', 'info'])
 
         # Setting flow for trivial one-process simulations
         if len(self.pm._store) == 1:
@@ -79,23 +78,19 @@ class EventManager(Manager):
         if 'until' in kwargs:
             kwargs['until'] = parse_time(kwargs['until'])
         self.pm.env.run(**kwargs)
-        self.parse_checkpoints()
 
-    def parse_checkpoints(self):
+    @property
+    def checkpoints(self):
         """
         Combine checkpoints of all users in a time indexed data frame
         """
+        checkpoints = []
         for user in self.um.users:
-            user_cp = self.um.get_user(user).checkpoints
-            for index, row in user_cp.iterrows():
-                user_row = Series(data={
-                    'instant': row['instant'],
-                    'user': user,
-                    'info': row['info']
-                })
-                self.checkpoints = self.checkpoints.append(user_row, ignore_index=True)
-                self.checkpoints = self.checkpoints.sort_values(
-                    by='instant').reset_index(drop=True)
+            for checkpoint in self.um.get_user(user).checkpoints:
+                checkpoints.append({'user': user, **checkpoint})
+
+        return DataFrame(checkpoints).sort_values(
+            by='instant').reset_index(drop=True)
 
     def get_state(self, at):
         """

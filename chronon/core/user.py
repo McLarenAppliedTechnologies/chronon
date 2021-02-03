@@ -35,7 +35,7 @@ class User:
         self.__dict__.update(kwargs)
         self.instant = kwargs.get('instant', 0)
         self.initial_process = kwargs.get('initial_process', 'initial')
-        self.checkpoints = DataFrame(columns=['instant', 'info'])
+        self.checkpoints = []
 
     def set_attributes(self, **kwargs):
         """
@@ -53,10 +53,7 @@ class User:
         Args:
             name (str): identifier of this checkpoint
         """
-        checkpoint = Series(
-            data={'instant': self.humanise(self.env.now), 'info': info}
-        )
-        self.checkpoints = self.checkpoints.append(checkpoint, ignore_index=True)
+        self.checkpoints.append({'instant': self.humanise(self.env.now), 'info': info})
 
     def run(self):
         """Assemble timeline of events for a user."""
