@@ -1,4 +1,4 @@
-from pandas import DataFrame, Series
+from pandas import DataFrame
 from ..core.manager import Manager
 from .user_manager import UserManager
 from ..helpers.time import parse_time
