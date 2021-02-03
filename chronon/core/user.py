@@ -1,5 +1,4 @@
 import simpy
-from pandas import DataFrame, Series
 import numpy as np
 from datetime import datetime, timedelta
 from ..helpers.time import parse_time
