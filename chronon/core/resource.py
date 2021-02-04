@@ -108,8 +108,15 @@ class Resource(simpy.Resource):
         self.name = name
         self.__dict__.update(kwargs)
         self.report = kwargs.get('report', True)
-        self.usage = DataFrame(columns=['instant', 'user', 'status', 'users', 'queue'])
+        self.usage_dict = []
         super().__init__(rm.env, kwargs.get('capacity', 1))
+    
+    @property
+    def usage(self):
+        if self.usage_dict:
+            return DataFrame(self.usage_dict)
+        else:
+            return DataFrame(columns=['instant', 'user', 'status', 'users', 'queue'])
 
     def _trigger_put(self, get_event):
         idx = 0
@@ -181,11 +188,10 @@ class Resource(simpy.Resource):
         if self.report:
             users = [r.user.name for r in self.users]
             queue = [r.user.name for r in self.queue if r not in self.users]
-            update = Series(data={
+            self.usage_dict.append({
                 'instant': user.humanise(self._env.now),
                 'user': user.name,
                 'status': status,
                 'users': users,
                 'queue': queue
             })
-            self.usage = self.usage.append(update, ignore_index=True)
