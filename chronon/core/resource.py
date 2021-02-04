@@ -1,5 +1,5 @@
 import simpy
-from pandas import DataFrame, Series
+from pandas import DataFrame
 from itertools import chain
 
 
@@ -110,7 +110,7 @@ class Resource(simpy.Resource):
         self.report = kwargs.get('report', True)
         self.usage_dict = []
         super().__init__(rm.env, kwargs.get('capacity', 1))
-    
+
     @property
     def usage(self):
         if self.usage_dict:
