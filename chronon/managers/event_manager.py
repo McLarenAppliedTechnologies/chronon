@@ -1,4 +1,4 @@
-from pandas import DataFrame, Series
+from pandas import DataFrame
 from ..core.manager import Manager
 from .user_manager import UserManager
 from ..helpers.time import parse_time
@@ -24,7 +24,6 @@ class EventManager(Manager):
         super().__init__()
         self.um = kwargs.get('um', UserManager(pm))
         self.events = self._store.keys()
-        self.checkpoints = DataFrame(columns=['instant', 'user', 'info'])
 
         # Setting flow for trivial one-process simulations
         if len(self.pm._store) == 1:
@@ -79,20 +78,38 @@ class EventManager(Manager):
         if 'until' in kwargs:
             kwargs['until'] = parse_time(kwargs['until'])
         self.pm.env.run(**kwargs)
-        self.parse_checkpoints()
 
-    def parse_checkpoints(self):
+    @property
+    def checkpoints(self):
         """
         Combine checkpoints of all users in a time indexed data frame
         """
+        checkpoints = []
         for user in self.um.users:
-            user_cp = self.um.get_user(user).checkpoints
-            for index, row in user_cp.iterrows():
-                user_row = Series(data={
-                    'instant': row['instant'],
-                    'user': user,
-                    'info': row['info']
-                })
-                self.checkpoints = self.checkpoints.append(user_row, ignore_index=True)
-                self.checkpoints = self.checkpoints.sort_values(
-                    by='instant').reset_index(drop=True)
+            for checkpoint in self.um.get_user(user).checkpoints:
+                checkpoints.append({'user': user, **checkpoint})
+
+        return DataFrame(checkpoints).sort_values(
+            by='instant').reset_index(drop=True)
+
+    def get_state(self, at):
+        """
+        Return the occupation and queues of each resource `at` a given instant
+
+        Args:
+            at (float): target instant
+        """
+        state = []
+        empty = {'users': [], 'queue': []}
+        for r in self.pm.rm.resources:
+            resource_state = (
+                self.pm.get_resource(r).usage
+                .query(f'instant<={at}').tail(1)
+                [['users', 'queue']].to_dict('records')
+            )
+            if resource_state:
+                state.append({'resource': r, **resource_state[0]})
+            else:
+                state.append({'resource': r, **empty})
+        state_df = DataFrame(state)
+        return state_df

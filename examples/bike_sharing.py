@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 import random
 from chronon import ProcessManager, EventManager, Process, Resource
 
@@ -132,3 +133,5 @@ for r in pm.rm.resources:
     print(pm.get_resource(r).usage)
 
 print(em.checkpoints)
+
+print(em.get_state(at=5))

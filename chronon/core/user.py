@@ -1,7 +1,8 @@
 import simpy
-from pandas import DataFrame, Series
+import numpy as np
 from datetime import datetime, timedelta
 from ..helpers.time import parse_time
+from .resource import Resource
 
 
 class User:
@@ -33,7 +34,7 @@ class User:
         self.__dict__.update(kwargs)
         self.instant = kwargs.get('instant', 0)
         self.initial_process = kwargs.get('initial_process', 'initial')
-        self.checkpoints = DataFrame(columns=['instant', 'info'])
+        self.checkpoints = []
 
     def set_attributes(self, **kwargs):
         """
@@ -51,10 +52,7 @@ class User:
         Args:
             name (str): identifier of this checkpoint
         """
-        checkpoint = Series(
-            data={'instant': self.humanise(self.env.now), 'info': info}
-        )
-        self.checkpoints = self.checkpoints.append(checkpoint, ignore_index=True)
+        self.checkpoints.append({'instant': self.humanise(self.env.now), 'info': info})
 
     def run(self):
         """Assemble timeline of events for a user."""
@@ -176,8 +174,10 @@ class User:
         which = kwargs.get('which', 'all')
         having = kwargs.get('having', None)
 
+        numbers = (int, float, np.int64, np.float64, datetime, timedelta)
+
         # Patience
-        if isinstance(patience, (int, float, datetime, timedelta)):
+        if isinstance(patience, numbers):
             waits_patience = self.env.timeout(parse_time(patience))
         elif patience == 'unlimited':
             # Creating an event that never will be triggered, aiming to make
@@ -187,18 +187,19 @@ class User:
             raise ValueError('Patience must be a number or datetime object')
 
         # Timeout
-        if isinstance(something, (int, float, datetime, timedelta)):
+        if isinstance(something, numbers):
             waits_time_or_resources = self.env.all_of(
                 [self.env.timeout(parse_time(something))]
             )
-
         # Resources
-        else:
+        elif isinstance(something, (list, str, Resource)):
             requests = self.requests(something, which=which, having=having)
             if which == 'all':
                 waits_time_or_resources = self.env.all_of(requests)
             elif which == 'any':
                 waits_time_or_resources = self.env.any_of(requests)
+        else:
+            raise ValueError('Users can only wait for time or resources')
 
         return waits_time_or_resources | waits_patience
 

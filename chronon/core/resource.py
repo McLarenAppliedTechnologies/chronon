@@ -1,5 +1,5 @@
 import simpy
-from pandas import DataFrame, Series
+from pandas import DataFrame
 from itertools import chain
 
 
@@ -102,12 +102,21 @@ class Resource(simpy.Resource):
 
         Keyword Args:
             capacity (int): resource capacity
+            report (bool): create report on resource usage or not
         """
         self.rm = rm
         self.name = name
         self.__dict__.update(kwargs)
-        self.usage = DataFrame(columns=['instant', 'user', 'status', 'users', 'queue'])
+        self.report = kwargs.get('report', True)
+        self.usage_dict = []
         super().__init__(rm.env, kwargs.get('capacity', 1))
+
+    @property
+    def usage(self):
+        if self.usage_dict:
+            return DataFrame(self.usage_dict)
+        else:
+            return DataFrame(columns=['instant', 'user', 'status', 'users', 'queue'])
 
     def _trigger_put(self, get_event):
         idx = 0
@@ -176,13 +185,13 @@ class Resource(simpy.Resource):
 
     def update_usage(self, user, status):
         """Update usage information"""
-        users = [r.user.name for r in self.users]
-        queue = [r.user.name for r in self.queue if r not in self.users]
-        update = Series(data={
-            'instant': user.humanise(self._env.now),
-            'user': user.name,
-            'status': status,
-            'users': users,
-            'queue': queue
-        })
-        self.usage = self.usage.append(update, ignore_index=True)
+        if self.report:
+            users = [r.user.name for r in self.users]
+            queue = [r.user.name for r in self.queue if r not in self.users]
+            self.usage_dict.append({
+                'instant': user.humanise(self._env.now),
+                'user': user.name,
+                'status': status,
+                'users': users,
+                'queue': queue
+            })

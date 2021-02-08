@@ -1,4 +1,3 @@
-import simpy
 from chronon import Process
 from chronon import ProcessManager
 from chronon import EventManager
